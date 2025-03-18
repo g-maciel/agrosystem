@@ -14,33 +14,25 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd pdo pdo_pgsql zip mbstring exif pcntl bcmath xml
 
 
-# Install Xdebug
-RUN pecl install xdebug \
-&& docker-php-ext-enable xdebug
-
 # Set working directory
 WORKDIR /var/www
 
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Copy application files
-COPY . /var/www
+COPY . .
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Install PHP dependencies
-RUN composer install --no-scripts --no-interaction
+RUN composer install --no-dev --optimize-autoloader
 
-# Create a user with the host's UID (default to 1000 if not specified)
-ARG USER_ID=1000
-RUN useradd -u ${USER_ID} -ms /bin/bash appuser
+RUN chmod -R 777 storage bootstrap/cache
 
-# Configure PHP-FPM to run as appuser
-RUN sed -i 's/user = www-data/user = appuser/' /usr/local/etc/php-fpm.d/www.conf \
-    && sed -i 's/group = www-data/group = appuser/' /usr/local/etc/php-fpm.d/www.conf
+EXPOSE 8000
 
-# Copy and set up the start script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Use the start script as the command
-CMD ["/start.sh"]
+ENTRYPOINT [ "/entrypoint.sh" ]
