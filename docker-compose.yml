@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+    image: agrosystem-app
+    container_name: agrosystem-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    networks:
+      - agrosystem
+
+  db:
+    image: postgres:13
+    container_name: agrosystem-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agrosystem
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - agrosystem
+
+  nginx:
+    image: nginx:alpine
+    container_name: agrosystem-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./nginx:/etc/nginx/conf.d
+    networks:
+      - agrosystem
+
+networks:
+  agrosystem:
+    driver: bridge
+
+volumes:
+  dbdata:
