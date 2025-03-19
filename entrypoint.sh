@@ -1,13 +1,17 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
-# echo "Waiting for database connection..."
-# until nc -z -v -w30 $DB_HOST $DB_PORT; do
-#     echo "Waiting for database connection..."
-#     sleep 2
-# done
+# Ensure proper permissions on storage and cache directories
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# echo "Database is ready!"
-
+# Run migrations automatically on container startup
 php artisan migrate --force
 
-php artisan serve --host=0.0.0.0 --port=8000
+# (Optional) Clear and cache configs if needed
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+
+# Start Supervisor to run both php-fpm and nginx
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisor.conf

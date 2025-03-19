@@ -5,22 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        USER_ID: ${USER_ID:-1000}
-    image: agrosystem-app
     container_name: agrosystem-app
-    restart: unless-stopped
-    working_dir: /var/www
     volumes:
       - .:/var/www
-      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    env_file:
+      - .env
+    depends_on:
+      - db
     networks:
       - agrosystem
 
   db:
-    image: postgres:13
+    image: postgres:15
     container_name: agrosystem-db
-    restart: unless-stopped
     environment:
       POSTGRES_DB: agrosystem
       POSTGRES_USER: user

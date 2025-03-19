@@ -1,7 +1,9 @@
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies, nginx, and supervisor
 RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -14,26 +16,33 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_pgsql zip mbstring exif pcntl bcmath xml
 
+# Copy your custom Nginx config
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# Copy Supervisor configuration (we’ll create this next)
+COPY supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
 # Set working directory
 WORKDIR /var/www
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
 # Copy application files
 COPY . .
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer from the official image
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-RUN chmod -R 777 storage bootstrap/cache
+# Set proper permissions for storage and cache directories
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-EXPOSE 8000
+# Expose port 80 (Render expects your container to listen on this port)
+EXPOSE 80
 
+# Copy entrypoint script and make it executable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+# Set the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
