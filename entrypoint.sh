@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "Waiting for database connection..."
-until nc -z -v -w30 $DB_HOST $DB_PORT; do
-    echo "Waiting for database connection..."
-    sleep 2
-done
+# echo "Waiting for database connection..."
+# until nc -z -v -w30 $DB_HOST $DB_PORT; do
+#     echo "Waiting for database connection..."
+#     sleep 2
+# done
 
-echo "Database is ready!"
+# echo "Database is ready!"
 
 php artisan migrate --force
 
