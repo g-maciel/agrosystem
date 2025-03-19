@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo pdo_pgsql zip mbstring exif pcntl bcmath xml
 
+# Remove the default Nginx config file if it exists
+RUN rm -f /etc/nginx/conf.d/default.conf
+
 # Copy your custom Nginx config
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
